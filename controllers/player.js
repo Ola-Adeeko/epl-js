@@ -1,5 +1,6 @@
 import CustomError from "../Errors/customErrors.js";
 import db from "../config/db.js";
+import { body } from "express-validator";
 
 export const checkPlayerExistsById = async (req, res, next) => {
   const { playerId } = req.params;
@@ -20,23 +21,29 @@ export const checkPlayerExistsById = async (req, res, next) => {
   }
 };
 
+export const validatePlayerRules = () => {
+  return [
+    body("name").notEmpty().withMessage("Player name cannot be empty"),
+    body("age").notEmpty().withMessage("Player age cannot be empty"),
+    body("number").notEmpty().withMessage("Player number cannot be empty"),
+    body("country").notEmpty().withMessage("Player country cannot be empty"),
+    body("club").notEmpty().withMessage("Player club cannot be empty"),
+  ];
+};
+
+// Validation result handler middleware
 export const validatePlayer = async (req, res, next) => {
-  const { name, age, number, country, club } = req.body;
+  const { name } = req.body;
 
   try {
-    if (!name) throw new CustomError("Player name cannot be empty", 400);
-    if (!age) throw new CustomError("Player age cannot be empty", 400);
-    if (!number) throw new CustomError("Player number cannot be empty", 400);
-    if (!country) throw new CustomError("Player country cannot be empty", 400);
-    if (!club) throw new CustomError("Player club cannot be empty", 400);
-
     const [playerIsExisting] = await db.execute(
       "SELECT * FROM players WHERE name = ? LIMIT 1",
       [name]
     );
 
-    if (!!playerIsExisting.length)
+    if (playerIsExisting.length) {
       throw new CustomError("Player already exists", 400);
+    }
 
     next();
   } catch (err) {
