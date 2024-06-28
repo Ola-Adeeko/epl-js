@@ -1,7 +1,10 @@
 import db from "../config/db.js";
 import CustomError from "../Errors/customErrors.js";
 import * as bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
+dotenv.config();
 const saltRounds = 10;
 
 const validateHashedPassword = async (userPassword, hashedPassword) => {
@@ -29,7 +32,7 @@ export const onLogin = async (req, res, next) => {
       throw new CustomError("Please enter email and password", 400);
 
     const [userExist] = await db.execute(
-      "SELECT * from users WHERE email = ?",
+      "SELECT * from users WHERE email = ? LIMIT 1",
       [email]
     );
 
@@ -43,12 +46,20 @@ export const onLogin = async (req, res, next) => {
     if (!validateUserPassword)
       throw new CustomError("Invalid credentials provided", 400);
 
+    const registeredUser = {
+      id: userExist[0].id,
+      email: userExist[0].email,
+    };
+    const accessToken = jwt.sign(
+      registeredUser,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+
     res.status(200).json({
       status: true,
       message: "user logged in successfully",
       data: {
-        email: userExist[0]?.email,
-        username: userExist[0]?.username,
+        accessToken: accessToken,
       },
     });
   } catch (err) {
@@ -79,10 +90,27 @@ export const onRegister = async (req, res, next) => {
       [email, hash_password, username]
     );
 
+    const [users] = await db.execute(
+      "SELECT * FROM users where email = ? LIMIT 1",
+      [email]
+    );
+
+    const registeredUser = {
+      id: users[0].id,
+      email: users[0].email,
+    };
+
+    const accessToken = jwt.sign(
+      registeredUser,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+
     res.status(200).json({
       status: true,
       message: "User created successfully",
-      data: req.body,
+      data: {
+        accessToken: accessToken,
+      },
     });
   } catch (err) {
     next(err);
