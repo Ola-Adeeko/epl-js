@@ -1,4 +1,5 @@
 import express from "express";
+import { handleValidationErrors } from "./../middleware/validatorError.js";
 import {
   getAllClubs,
   createClub,
@@ -9,6 +10,7 @@ import {
   validatePatchClub,
   patchClubById,
   updateClubById,
+  validateClubRules,
 } from "../controllers/club.js";
 const router = express.Router();
 
@@ -16,7 +18,7 @@ const router = express.Router();
 router.get("/", getAllClubs);
 
 // Create Club
-router.post("/", createClub);
+router.post("/", validateClubRules(), handleValidationErrors, createClub);
 
 // Get Single Club by Id
 router.get("/:clubId", getExistingClub, getClubById);

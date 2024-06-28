@@ -1,3 +1,4 @@
+import { body } from "express-validator";
 import CustomError from "../Errors/customErrors.js";
 import db from "./../config/db.js";
 
@@ -14,6 +15,14 @@ const checkClubExistsById = async (clubId) => {
   } catch (err) {
     throw new CustomError("Error checking club existence", 500);
   }
+};
+
+export const validateClubRules = () => {
+  return [
+    body("name").notEmpty().withMessage("club name cannot be empty"),
+    body("owner").notEmpty().withMessage("club owner cannot be empty"),
+    body("manager").notEmpty().withMessage("club manager cannot be empty"),
+  ];
 };
 
 export const getExistingClub = async (req, res, next) => {
@@ -53,10 +62,6 @@ export const createClub = async (req, res, next) => {
   const { name, manager, owner } = req.body;
 
   try {
-    if (!name) throw new CustomError("club name cannot be empty", 400);
-    if (!owner) throw new CustomError("Club owner cannot be empty", 400);
-    if (!manager) throw new CustomError("Club manager cannot be empty", 400);
-
     const clubIsExisting = await db.execute(
       "SELECT * FROM Clubs WHERE name = ? LIMIT 1",
       [name]

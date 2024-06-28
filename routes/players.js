@@ -8,14 +8,22 @@ import {
   patchPlayerById,
   updatePlayerById,
   validatePlayer,
+  validatePlayerRules,
 } from "../controllers/player.js";
+import { handleValidationErrors } from "../middleware/validatorError.js";
 const router = express.Router();
 
 // Get All Players
 router.get("/", getAllPlayers);
 
 // Create Player
-router.post("/", validatePlayer, createPlayer);
+router.post(
+  "/",
+  validatePlayerRules(),
+  handleValidationErrors,
+  validatePlayer,
+  createPlayer
+);
 
 // Get Single Player by Id
 router.get("/:playerId", checkPlayerExistsById, getPlayerById);
